@@ -16,7 +16,7 @@ class AppTheme {
       seedColor: primaryColor,
       primary: primaryColor,
       secondary: secondaryColor,
-      background: backgroundColor,
+      surface: backgroundColor,
     ),
     textTheme: GoogleFonts.plusJakartaSansTextTheme().copyWith(
       displayLarge: GoogleFonts.plusJakartaSans(
