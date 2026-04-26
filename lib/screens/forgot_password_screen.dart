@@ -12,17 +12,14 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  
+  bool _isEmailVerified = false;
+  bool _obscurePassword = true;
 
-  void _handleResetPassword() async {
+  void _handleCheckEmail() async {
     if (_emailController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Email harus diisi'),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
+      _showSnackBar('Email harus diisi', Colors.redAccent);
       return;
     }
 
@@ -31,26 +28,44 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     if (mounted) {
       if (result['success']) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message'] ?? 'Email reset password telah dikirim'),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-        Navigator.pop(context); // Return to login screen
+        setState(() {
+          _isEmailVerified = true;
+        });
+        _showSnackBar(result['message'] ?? 'Email terverifikasi', Colors.green);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message']),
-            backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
+        _showSnackBar(result['message'] ?? 'Email tidak ditemukan', Colors.redAccent);
       }
     }
+  }
+
+  void _handleResetPassword() async {
+    if (_passwordController.text.isEmpty || _passwordController.text.length < 6) {
+      _showSnackBar('Password baru minimal 6 karakter', Colors.redAccent);
+      return;
+    }
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final result = await authProvider.resetPassword(_emailController.text, _passwordController.text);
+
+    if (mounted) {
+      if (result['success']) {
+        _showSnackBar(result['message'] ?? 'Password berhasil diubah', Colors.green);
+        Navigator.pop(context); // Kembali ke login
+      } else {
+        _showSnackBar(result['message'] ?? 'Gagal mereset password', Colors.redAccent);
+      }
+    }
+  }
+
+  void _showSnackBar(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
   }
 
   @override
@@ -107,7 +122,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                   const SizedBox(height: 32),
                   Text(
-                    'Lupa Password?',
+                    _isEmailVerified ? 'Buat Password Baru' : 'Lupa Password?',
                     style: Theme.of(context).textTheme.displayLarge?.copyWith(
                           fontSize: 28,
                           color: AppTheme.textColor,
@@ -115,7 +130,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Masukkan email yang terdaftar pada akun Anda. Kami akan mengirimkan instruksi untuk mereset password.',
+                    _isEmailVerified 
+                        ? 'Silakan masukkan password baru untuk akun Anda.' 
+                        : 'Masukkan email yang terdaftar. Kami akan memverifikasi email Anda sebelum mereset password.',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: AppTheme.textSecondaryColor,
                           height: 1.5,
@@ -135,17 +152,50 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
+                    enabled: !_isEmailVerified,
+                    decoration: InputDecoration(
                       hintText: 'Masukkan email Anda',
-                      prefixIcon: Icon(Icons.alternate_email_rounded),
+                      prefixIcon: const Icon(Icons.alternate_email_rounded),
+                      filled: _isEmailVerified,
+                      fillColor: _isEmailVerified ? Colors.grey.shade200 : null,
                     ),
                   ),
                   
+                  if (_isEmailVerified) ...[
+                    const SizedBox(height: 24),
+                    // New Password Field
+                    Text(
+                      'Password Baru',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textColor,
+                          ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        hintText: 'Masukkan password baru',
+                        prefixIcon: const Icon(Icons.lock_outline_rounded),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                            size: 20,
+                          ),
+                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        ),
+                      ),
+                    ),
+                  ],
+
                   const SizedBox(height: 48),
                   
-                  // Reset Button
+                  // Action Button
                   ElevatedButton(
-                    onPressed: isLoading ? null : _handleResetPassword,
+                    onPressed: isLoading 
+                        ? null 
+                        : (_isEmailVerified ? _handleResetPassword : _handleCheckEmail),
                     style: ElevatedButton.styleFrom(
                       elevation: 8,
                       shadowColor: AppTheme.primaryColor.withAlpha(102),
@@ -159,7 +209,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               strokeWidth: 3,
                             ),
                           )
-                        : const Text('Kirim Email Reset'),
+                        : Text(_isEmailVerified ? 'Simpan Password Baru' : 'Verifikasi Email'),
                   ),
                 ],
               ),

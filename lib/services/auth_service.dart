@@ -121,6 +121,78 @@ class AuthService {
     }
   }
 
+  Future<Map<String, dynamic>> resetPassword(String email, String password) async {
+    try {
+      final response = await http.post(
+        Uri.parse(AppConstants.resetPassword),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      final Map<String, dynamic> responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': responseData['message'],
+        };
+      } else {
+        return {
+          'success': false,
+          'message': responseData['error'] ?? 'Gagal mereset password',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Terjadi kesalahan koneksi: $e',
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> googleLogin(String email, String name) async {
+    try {
+      final response = await http.post(
+        Uri.parse(AppConstants.googleLogin),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'email': email,
+          'name': name,
+        }),
+      );
+
+      final Map<String, dynamic> responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'token': responseData['access_token'],
+          'user': responseData['user'],
+          'message': responseData['message'],
+        };
+      } else {
+        return {
+          'success': false,
+          'message': responseData['error'] ?? 'Login Google gagal',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Terjadi kesalahan koneksi: $e',
+      };
+    }
+  }
+
   Future<bool> logout(String token) async {
     try {
       final response = await http.post(

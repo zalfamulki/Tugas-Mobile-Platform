@@ -213,9 +213,30 @@ class _LoginScreenState extends State<LoginScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildSocialButton(Icons.g_mobiledata, () {}),
-                      const SizedBox(width: 20),
-                      _buildSocialButton(Icons.fingerprint_rounded, () {}),
+                      _buildSocialButton(Icons.g_mobiledata, () async {
+                        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                        final result = await authProvider.handleGoogleSignIn();
+
+                        if (mounted) {
+                          if (result['success']) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (context) => const HomeScreen()),
+                            );
+                          } else {
+                            if (result['message'] != 'Google Sign In dibatalkan') {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(result['message']),
+                                  backgroundColor: Colors.redAccent,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                              );
+                            }
+                          }
+                        }
+                      }),
                     ],
                   ),
                   const SizedBox(height: 32),
