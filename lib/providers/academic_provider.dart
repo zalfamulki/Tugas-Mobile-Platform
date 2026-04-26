@@ -91,4 +91,106 @@ class AcademicProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // Matkul Actions
+  Future<void> addMatkul(String token, Map<String, dynamic> data) async {
+    try {
+      final newMatkul = await _academicService.storeMatkul(token, data);
+      _matkuls.add(newMatkul);
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> editMatkul(String token, int id, Map<String, dynamic> data) async {
+    try {
+      final updated = await _academicService.updateMatkul(token, id, data);
+      final index = _matkuls.indexWhere((m) => m.id == id);
+      if (index != -1) {
+        _matkuls[index] = updated;
+        notifyListeners();
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> removeMatkul(String token, int id) async {
+    try {
+      await _academicService.deleteMatkul(token, id);
+      _matkuls.removeWhere((m) => m.id == id);
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Mahasiswa Actions
+  Future<void> addMahasiswa(String token, Map<String, dynamic> data) async {
+    try {
+      final newMhs = await _academicService.storeMahasiswa(token, data);
+      _mahasiswas.add(newMhs);
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> editMahasiswa(String token, int id, Map<String, dynamic> data) async {
+    try {
+      final updated = await _academicService.updateMahasiswa(token, id, data);
+      final index = _mahasiswas.indexWhere((m) => m.id == id);
+      if (index != -1) {
+        _mahasiswas[index] = updated;
+        notifyListeners();
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> removeMahasiswa(String token, int id) async {
+    try {
+      await _academicService.deleteMahasiswa(token, id);
+      _mahasiswas.removeWhere((m) => m.id == id);
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Grade Actions
+  Future<void> addGrade(String token, Map<String, dynamic> data) async {
+    try {
+      final newGrade = await _academicService.storeGrade(token, data);
+      _grades.add(newGrade);
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> editGrade(String token, int id, Map<String, dynamic> data) async {
+    try {
+      final updated = await _academicService.updateGrade(token, id, data);
+      final index = _grades.indexWhere((g) => g.id == id);
+      if (index != -1) {
+        _grades[index] = updated;
+        notifyListeners();
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> removeGrade(String token, int id) async {
+    try {
+      await _academicService.deleteGrade(token, id);
+      _grades.removeWhere((g) => g.id == id);
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

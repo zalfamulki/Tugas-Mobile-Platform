@@ -2,27 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'home_screen.dart';
-import 'register_screen.dart';
-import 'forgot_password_screen.dart';
 import '../utils/theme.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  final _loginController = TextEditingController();
+class _RegisterScreenState extends State<RegisterScreen> {
+  final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
-  void _handleLogin() async {
-    if (_loginController.text.isEmpty || _passwordController.text.isEmpty) {
+  void _handleRegister() async {
+    if (_nameController.text.isEmpty ||
+        _usernameController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Email/Username dan password harus diisi'),
+          content: const Text('Semua field harus diisi'),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -32,13 +35,23 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final result = await authProvider.login(
-      _loginController.text,
+    final result = await authProvider.register(
+      _nameController.text,
+      _usernameController.text,
+      _emailController.text,
       _passwordController.text,
     );
 
     if (mounted) {
       if (result['success']) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Registrasi berhasil!'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -62,6 +75,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.textColor),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      extendBodyBehindAppBar: true,
       body: Stack(
         children: [
           // Background Decoration
@@ -79,29 +101,13 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 60),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primaryColor.withAlpha(76),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(Icons.school_rounded, size: 40, color: Colors.white),
-                  ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 20),
                   Text(
-                    'Selamat Datang Kembali',
+                    'Buat Akun Baru',
                     style: Theme.of(context).textTheme.displayLarge?.copyWith(
                           fontSize: 28,
                           color: AppTheme.textColor,
@@ -109,16 +115,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Akses portal akademik Anda dengan mudah dan aman.',
+                    'Daftar untuk menikmati layanan akademik ZalXEdu.',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: AppTheme.textSecondaryColor,
                         ),
                   ),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 40),
                   
-                  // Login Field
+                  // Name Field
                   Text(
-                    'Email atau Username',
+                    'Nama Lengkap',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppTheme.textColor,
@@ -126,13 +132,50 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 10),
                   TextField(
-                    controller: _loginController,
+                    controller: _nameController,
                     decoration: const InputDecoration(
-                      hintText: 'Masukkan email atau NIM',
+                      hintText: 'Masukkan nama lengkap',
+                      prefixIcon: Icon(Icons.person_outline_rounded),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Username Field
+                  Text(
+                    'Username',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textColor,
+                        ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _usernameController,
+                    decoration: const InputDecoration(
+                      hintText: 'Masukkan username',
+                      prefixIcon: Icon(Icons.account_circle_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Email Field
+                  Text(
+                    'Email',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textColor,
+                        ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(
+                      hintText: 'Masukkan email',
                       prefixIcon: Icon(Icons.alternate_email_rounded),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   
                   // Password Field
                   Text(
@@ -159,25 +202,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
-                        );
-                      },
-                      child: const Text('Lupa Password?'),
-                    ),
-                  ),
+                  const SizedBox(height: 40),
                   
-                  const SizedBox(height: 32),
-                  
-                  // Login Button
+                  // Register Button
                   ElevatedButton(
-                    onPressed: isLoading ? null : _handleLogin,
+                    onPressed: isLoading ? null : _handleRegister,
                     style: ElevatedButton.styleFrom(
                       elevation: 8,
                       shadowColor: AppTheme.primaryColor.withAlpha(102),
@@ -191,50 +220,20 @@ class _LoginScreenState extends State<LoginScreen> {
                               strokeWidth: 3,
                             ),
                           )
-                        : const Text('Masuk ke Akun'),
+                        : const Text('Daftar Akun'),
                   ),
-                  
-                  const SizedBox(height: 40),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(height: 1, width: 60, color: Colors.grey.shade300),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'Atau masuk dengan',
-                          style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-                        ),
-                      ),
-                      Container(height: 1, width: 60, color: Colors.grey.shade300),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildSocialButton(Icons.g_mobiledata, () {}),
-                      const SizedBox(width: 20),
-                      _buildSocialButton(Icons.fingerprint_rounded, () {}),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 30),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Belum punya akun? ',
+                        'Sudah punya akun? ',
                         style: TextStyle(color: AppTheme.textSecondaryColor),
                       ),
                       GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const RegisterScreen()),
-                          );
-                        },
+                        onTap: () => Navigator.pop(context),
                         child: Text(
-                          'Daftar Sekarang',
+                          'Masuk',
                           style: TextStyle(
                             color: AppTheme.primaryColor,
                             fontWeight: FontWeight.bold,
@@ -249,22 +248,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSocialButton(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: Icon(icon, size: 32, color: AppTheme.textColor),
       ),
     );
   }

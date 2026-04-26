@@ -38,6 +38,40 @@ class AuthProvider with ChangeNotifier {
     return result;
   }
 
+  // Register Method
+  Future<Map<String, dynamic>> register(String name, String username, String email, String password) async {
+    _isLoading = true;
+    notifyListeners();
+
+    final result = await _authService.register(name, username, email, password);
+
+    if (result['success']) {
+      _token = result['token'];
+      _user = UserModel.fromJson(result['user']);
+      
+      // Simpan ke SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', _token!);
+      await prefs.setString('user', jsonEncode(_user!.toJson()));
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return result;
+  }
+
+  // Forgot Password Method
+  Future<Map<String, dynamic>> forgotPassword(String email) async {
+    _isLoading = true;
+    notifyListeners();
+
+    final result = await _authService.forgotPassword(email);
+
+    _isLoading = false;
+    notifyListeners();
+    return result;
+  }
+
   // Auto Login Method
   Future<void> tryAutoLogin() async {
     final prefs = await SharedPreferences.getInstance();

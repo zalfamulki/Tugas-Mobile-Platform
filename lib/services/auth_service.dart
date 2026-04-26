@@ -39,6 +39,88 @@ class AuthService {
     }
   }
 
+  Future<Map<String, dynamic>> register(String name, String username, String email, String password) async {
+    try {
+      final response = await http.post(
+        Uri.parse(AppConstants.register),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'name': name,
+          'username': username,
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      final Map<String, dynamic> responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'token': responseData['access_token'],
+          'user': responseData['user'],
+          'message': responseData['message'],
+        };
+      } else {
+        // Handle validation errors from Laravel
+        String errorMsg = 'Registrasi gagal';
+        if (responseData['errors'] != null) {
+            final errors = responseData['errors'] as Map<String, dynamic>;
+            errorMsg = errors.values.first[0]; // Get the first error message
+        } else if (responseData['message'] != null) {
+            errorMsg = responseData['message'];
+        }
+        
+        return {
+          'success': false,
+          'message': errorMsg,
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Terjadi kesalahan koneksi: $e',
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> forgotPassword(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse(AppConstants.forgotPassword),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'email': email,
+        }),
+      );
+
+      final Map<String, dynamic> responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': responseData['message'],
+        };
+      } else {
+        return {
+          'success': false,
+          'message': responseData['error'] ?? responseData['message'] ?? 'Gagal mengirim email reset',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Terjadi kesalahan koneksi: $e',
+      };
+    }
+  }
+
   Future<bool> logout(String token) async {
     try {
       final response = await http.post(

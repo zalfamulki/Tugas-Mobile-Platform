@@ -65,6 +65,117 @@ class AcademicService {
     }
   }
 
+  // Matkul CRUD
+  Future<MatkulModel> storeMatkul(String token, Map<String, dynamic> data) async {
+    final response = await http.post(
+      Uri.parse(AppConstants.matkul),
+      headers: _headers(token),
+      body: jsonEncode(data),
+    );
+    if (response.statusCode == 201) {
+      return MatkulModel.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Gagal menambah mata kuliah: ${response.body}');
+    }
+  }
+
+  Future<MatkulModel> updateMatkul(String token, int id, Map<String, dynamic> data) async {
+    final response = await http.put(
+      Uri.parse('${AppConstants.matkul}/$id'),
+      headers: _headers(token),
+      body: jsonEncode(data),
+    );
+    if (response.statusCode == 200) {
+      return MatkulModel.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Gagal update mata kuliah: ${response.body}');
+    }
+  }
+
+  Future<void> deleteMatkul(String token, int id) async {
+    final response = await http.delete(
+      Uri.parse('${AppConstants.matkul}/$id'),
+      headers: _headers(token),
+    );
+    if (response.statusCode != 204) {
+      throw Exception('Gagal menghapus mata kuliah: ${response.body}');
+    }
+  }
+
+  // Mahasiswa CRUD
+  Future<MahasiswaModel> storeMahasiswa(String token, Map<String, dynamic> data) async {
+    final response = await http.post(
+      Uri.parse(AppConstants.mahasiswa),
+      headers: _headers(token),
+      body: jsonEncode(data),
+    );
+    if (response.statusCode == 201) {
+      return MahasiswaModel.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Gagal menambah mahasiswa: ${response.body}');
+    }
+  }
+
+  Future<MahasiswaModel> updateMahasiswa(String token, int id, Map<String, dynamic> data) async {
+    final response = await http.put(
+      Uri.parse('${AppConstants.mahasiswa}/$id'),
+      headers: _headers(token),
+      body: jsonEncode(data),
+    );
+    if (response.statusCode == 200) {
+      return MahasiswaModel.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Gagal update mahasiswa: ${response.body}');
+    }
+  }
+
+  Future<void> deleteMahasiswa(String token, int id) async {
+    final response = await http.delete(
+      Uri.parse('${AppConstants.mahasiswa}/$id'),
+      headers: _headers(token),
+    );
+    if (response.statusCode != 204) {
+      throw Exception('Gagal menghapus mahasiswa: ${response.body}');
+    }
+  }
+
+  // Grade CRUD
+  Future<GradeModel> storeGrade(String token, Map<String, dynamic> data) async {
+    final response = await http.post(
+      Uri.parse(AppConstants.grade),
+      headers: _headers(token),
+      body: jsonEncode(data),
+    );
+    if (response.statusCode == 201) {
+      return GradeModel.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Gagal menambah nilai: ${response.body}');
+    }
+  }
+
+  Future<GradeModel> updateGrade(String token, int id, Map<String, dynamic> data) async {
+    final response = await http.put(
+      Uri.parse('${AppConstants.grade}/$id'),
+      headers: _headers(token),
+      body: jsonEncode(data),
+    );
+    if (response.statusCode == 200) {
+      return GradeModel.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Gagal update nilai: ${response.body}');
+    }
+  }
+
+  Future<void> deleteGrade(String token, int id) async {
+    final response = await http.delete(
+      Uri.parse('${AppConstants.grade}/$id'),
+      headers: _headers(token),
+    );
+    if (response.statusCode != 204) {
+      throw Exception('Gagal menghapus nilai: ${response.body}');
+    }
+  }
+
   Future<List<MatkulModel>> fetchSchedule(String token) async {
     try {
       final response = await http

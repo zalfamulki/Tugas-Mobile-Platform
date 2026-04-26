@@ -1,10 +1,12 @@
 class AppConstants {
-  // Ganti dengan IP Address laptop Anda jika running di Real Device
+  // Gunakan IP Address laptop  jika running di Real Device
   // Gunakan 10.0.2.2 untuk Android Emulator
-  static const String baseUrl = "http://10.0.2.2:8000/api";
-  
+  static const String baseUrl = "http://192.168.0.101:8000/api";
+
   // Endpoints
   static const String login = "$baseUrl/auth/login";
+  static const String register = "$baseUrl/auth/register";
+  static const String forgotPassword = "$baseUrl/auth/forgot-password";
   static const String logout = "$baseUrl/auth/logout";
   static const String profile = "$baseUrl/auth/user-profile";
   static const String matkul = "$baseUrl/matkuls";
