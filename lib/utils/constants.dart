@@ -8,7 +8,6 @@ class AppConstants {
   static const String register = "$baseUrl/auth/register";
   static const String forgotPassword = "$baseUrl/auth/forgot-password";
   static const String resetPassword = "$baseUrl/auth/reset-password";
-  static const String googleLogin = "$baseUrl/auth/google-login";
   static const String logout = "$baseUrl/auth/logout";
   static const String profile = "$baseUrl/auth/user-profile";
   static const String matkul = "$baseUrl/matkuls";
