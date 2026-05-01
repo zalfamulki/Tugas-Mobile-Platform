@@ -39,7 +39,13 @@ class AuthService {
     }
   }
 
-  Future<Map<String, dynamic>> register(String name, String username, String email, String password) async {
+  Future<Map<String, dynamic>> register(
+    String name,
+    String username,
+    String npm,
+    String email,
+    String password,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse(AppConstants.register),
@@ -50,6 +56,7 @@ class AuthService {
         body: jsonEncode({
           'name': name,
           'username': username,
+          'npm': npm,
           'email': email,
           'password': password,
         }),
@@ -65,15 +72,13 @@ class AuthService {
           'message': responseData['message'],
         };
       } else {
-        // Handle validation errors from Laravel
         String errorMsg = 'Registrasi gagal';
         if (responseData['errors'] != null) {
             final errors = responseData['errors'] as Map<String, dynamic>;
-            errorMsg = errors.values.first[0]; // Get the first error message
+            errorMsg = errors.values.first[0];
         } else if (responseData['message'] != null) {
             errorMsg = responseData['message'];
         }
-        
         return {
           'success': false,
           'message': errorMsg,
@@ -84,6 +89,48 @@ class AuthService {
         'success': false,
         'message': 'Terjadi kesalahan koneksi: $e',
       };
+    }
+  }
+
+  Future<Map<String, dynamic>> getMahasiswaProfile(String token) async {
+    try {
+      final response = await http.get(
+        Uri.parse(AppConstants.mahasiswaProfile),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+      final responseData = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': responseData};
+      } else {
+        return {'success': false, 'message': responseData['error'] ?? 'Gagal memuat profil'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Terjadi kesalahan koneksi: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> updateMahasiswaProfile(String token, Map<String, dynamic> data) async {
+    try {
+      final response = await http.put(
+        Uri.parse(AppConstants.mahasiswaProfile),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode(data),
+      );
+      final responseData = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': responseData['message'], 'data': responseData['mahasiswa']};
+      } else {
+        return {'success': false, 'message': responseData['error'] ?? 'Gagal memperbarui profil'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Terjadi kesalahan koneksi: $e'};
     }
   }
 

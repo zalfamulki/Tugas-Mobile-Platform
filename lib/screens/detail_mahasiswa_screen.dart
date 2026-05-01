@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/mahasiswa_model.dart';
 import '../utils/theme.dart';
-import 'nilai_screen.dart';
 
 class DetailMahasiswaScreen extends StatelessWidget {
   final MahasiswaModel mahasiswa;
@@ -78,33 +77,14 @@ class DetailMahasiswaScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textColor),
                   ),
                   const SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Row(
                     children: [
-                      _buildStatusCard('Semester', '6', Colors.blue),
+                      _buildStatusCard('Status', mahasiswa.status ?? 'Aktif', Colors.blue),
                       const SizedBox(width: 16),
-                      _buildStatusCard('IPK', '3.85', Colors.green),
+                      _buildStatusCard('Angkatan', mahasiswa.nim.length >= 2 ? '20${mahasiswa.nim.substring(0, 2)}' : '-', Colors.green),
                     ],
                   ),
-                  if (true) // Just to make sure logic is visible, usually check role here too if passed
-                    Padding(
-                      padding: const EdgeInsets.only(top: 24),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => NilaiScreen(
-                                userId: mahasiswa.id, // Using mahasiswa.id as target userId
-                                studentName: mahasiswa.nama,
-                              ),
-                            ),
-                          ),
-                          icon: const Icon(Icons.grade_rounded),
-                          label: const Text('Lihat & Kelola Nilai'),
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),
@@ -134,7 +114,9 @@ class DetailMahasiswaScreen extends StatelessWidget {
           const Divider(height: 32),
           _buildInfoRow(Icons.email_outlined, 'Email Institusi', mahasiswa.email ?? '-'),
           const Divider(height: 32),
-          _buildInfoRow(Icons.phone_android_rounded, 'Nomor Telepon', '+62 812-XXXX-XXXX'),
+          _buildInfoRow(Icons.phone_android_rounded, 'Nomor Telepon', mahasiswa.noHp ?? '-'),
+          const Divider(height: 32),
+          _buildInfoRow(Icons.location_on_outlined, 'Alamat', mahasiswa.alamat ?? '-'),
         ],
       ),
     );

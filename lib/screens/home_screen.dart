@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/academic_provider.dart';
+import '../models/matkul_model.dart';
 import 'login_screen.dart';
 import 'jadwal_screen.dart';
-import 'nilai_screen.dart';
+import 'data_diri_screen.dart';
 import 'detail_mahasiswa_screen.dart';
 import 'admin_forms.dart';
+import 'krs_screen.dart';
+import 'presensi_screen.dart';
+import 'bimbingan_screen.dart';
 import '../widgets/state_widgets.dart';
 import '../utils/theme.dart';
 
@@ -28,22 +32,22 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _fetchInitialData() {
+  Future<void> _fetchInitialData() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final academic = Provider.of<AcademicProvider>(context, listen: false);
     if (auth.token != null && auth.user != null) {
-      academic.getAllData(auth.token!, auth.user!.id);
+      await academic.getAllData(auth.token!, auth.user!.id, auth.user!.role == 'admin');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final auth = Provider.of<AuthProvider>(context);
+    final auth    = Provider.of<AuthProvider>(context);
     final isAdmin = auth.user?.role == 'admin';
 
     final pages = [
       _buildDashboard(context),
-      _buildMahasiswaTab(context),
+      isAdmin ? _buildMahasiswaTab(context) : const DataDiriScreen(),
       _buildProfile(context),
     ];
 
@@ -72,18 +76,21 @@ class _HomeScreenState extends State<HomeScreen> {
           indicatorColor: AppTheme.primaryColor.withAlpha(25),
           selectedIndex: _currentIndex,
           onDestinationSelected: (index) => setState(() => _currentIndex = index),
-          destinations: const [
-            NavigationDestination(
+          destinations: [
+            const NavigationDestination(
               icon: Icon(Icons.dashboard_outlined),
               selectedIcon: Icon(Icons.dashboard, color: AppTheme.primaryColor),
               label: 'Dashboard',
             ),
             NavigationDestination(
-              icon: Icon(Icons.group_outlined),
-              selectedIcon: Icon(Icons.group, color: AppTheme.primaryColor),
-              label: 'Mahasiswa',
+              icon: Icon(isAdmin ? Icons.group_outlined : Icons.person_pin_outlined),
+              selectedIcon: Icon(
+                isAdmin ? Icons.group : Icons.person_pin,
+                color: AppTheme.primaryColor,
+              ),
+              label: isAdmin ? 'Mahasiswa' : 'Data Diri',
             ),
-            NavigationDestination(
+            const NavigationDestination(
               icon: Icon(Icons.account_circle_outlined),
               selectedIcon: Icon(Icons.account_circle, color: AppTheme.primaryColor),
               label: 'Profil',
@@ -94,13 +101,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+
   Widget _buildDashboard(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
     final academic = Provider.of<AcademicProvider>(context);
     final isAdmin = auth.user?.role == 'admin';
 
     return RefreshIndicator(
-      onRefresh: () async => academic.getAllData(auth.token!, auth.user!.id),
+      onRefresh: () async {
+        if (auth.token != null && auth.user != null) {
+          await academic.getAllData(auth.token!, auth.user!.id, isAdmin);
+        }
+      },
       child: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
@@ -168,9 +180,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         _buildQuickAction(context, Icons.calendar_today_rounded, 'Jadwal', Colors.blue, const JadwalScreen()),
-                        _buildQuickAction(context, Icons.grade_rounded, 'Nilai', Colors.orange, const NilaiScreen()),
-                        _buildQuickAction(context, Icons.description_rounded, 'KRS', Colors.green, null),
-                        _buildQuickAction(context, Icons.info_outline_rounded, 'Info', Colors.purple, null),
+                        _buildQuickAction(context, Icons.description_rounded, 'KRS', Colors.green, const KrsScreen()),
+                        _buildQuickAction(context, Icons.how_to_reg_rounded, 'Presensi', Colors.orange, const PresensiScreen()),
+                        _buildQuickAction(context, Icons.people_outline_rounded, 'Bimbingan', Colors.purple, const BimbinganScreen()),
                       ],
                     ),
                   ),
@@ -191,25 +203,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (academic.isLoading)
                   const LoadingStateWidget()
                 else if (academic.hasError)
-                  ErrorStateWidget(message: academic.error!, onRetry: _fetchInitialData)
+                  ErrorStateWidget(message: academic.error ?? 'Terjadi kesalahan sistem', onRetry: _fetchInitialData)
                 else if (academic.matkuls.isEmpty)
                   const EmptyStateWidget(message: 'Belum ada aktivitas akademik.')
                 else
-                  ...academic.matkuls.take(5).map((matkul) => _buildMatkulCard(matkul, isAdmin, auth, academic)),
+                  ... (isAdmin 
+                      ? academic.matkuls.take(5) 
+                      : academic.krsList
+                          .where((k) => k.status == 'approved')
+                          .map((k) => k.matkul)
+                          .where((m) => m != null)
+                          .cast<MatkulModel>()
+                          .take(5))
+                  .map((matkul) => _buildMatkulCard(matkul, isAdmin, auth, academic)),
                 
-                const SizedBox(height: 24),
-                const Text(
-                  'Statistik Mahasiswa',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textColor),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(child: _buildStatCard('IPK', '3.85', Icons.trending_up, Colors.green)),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildStatCard('SKS', '84', Icons.book, Colors.blue)),
-                  ],
-                ),
                 const SizedBox(height: 100), // Spacing for bottom nav
               ]),
             ),
@@ -275,7 +282,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.delete_outline_rounded, size: 20, color: Colors.red),
-                    onPressed: () => _confirmDelete(matkul.nama, () => academic.removeMatkul(auth.token!, matkul.id)),
+                    onPressed: () {
+                      if (auth.token != null) {
+                        _confirmDelete(matkul.nama, () => academic.removeMatkul(auth.token!, matkul.id));
+                      }
+                    },
                   ),
                 ],
               )
@@ -284,25 +295,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade100),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 12),
-          Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textColor)),
-          Text(title, style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
-        ],
-      ),
-    );
-  }
 
   Widget _buildMahasiswaTab(BuildContext context) {
     final academic = Provider.of<AcademicProvider>(context);
@@ -330,7 +322,11 @@ class _HomeScreenState extends State<HomeScreen> {
       body: academic.isLoading
           ? const LoadingStateWidget()
           : RefreshIndicator(
-              onRefresh: () async => academic.getMahasiswas(auth.token!),
+              onRefresh: () async {
+                if (auth.token != null) {
+                  await academic.getMahasiswas(auth.token!);
+                }
+              },
               child: ListView.builder(
                 padding: const EdgeInsets.all(24),
                 itemCount: academic.filteredMahasiswas.length,
@@ -371,7 +367,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.delete_outline_rounded, size: 20, color: Colors.red),
-                                  onPressed: () => _confirmDelete(mhs.nama, () => academic.removeMahasiswa(auth.token!, mhs.id)),
+                                  onPressed: () {
+                                    if (auth.token != null) {
+                                      _confirmDelete(mhs.nama, () => academic.removeMahasiswa(auth.token!, mhs.id));
+                                    }
+                                  },
                                 ),
                               ],
                             )
@@ -439,6 +439,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 side: BorderSide(color: Colors.red.shade100),
               ),
               onPressed: () async {
+                final academic = Provider.of<AcademicProvider>(context, listen: false);
+                academic.clearData();
                 await auth.logout();
                 if (!context.mounted) return;
                 Navigator.of(context).pushAndRemoveUntil(

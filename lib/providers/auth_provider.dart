@@ -39,17 +39,22 @@ class AuthProvider with ChangeNotifier {
   }
 
   // Register Method
-  Future<Map<String, dynamic>> register(String name, String username, String email, String password) async {
+  Future<Map<String, dynamic>> register(
+    String name,
+    String username,
+    String npm,
+    String email,
+    String password,
+  ) async {
     _isLoading = true;
     notifyListeners();
 
-    final result = await _authService.register(name, username, email, password);
+    final result = await _authService.register(name, username, npm, email, password);
 
     if (result['success']) {
       _token = result['token'];
       _user = UserModel.fromJson(result['user']);
       
-      // Simpan ke SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', _token!);
       await prefs.setString('user', jsonEncode(_user!.toJson()));
@@ -79,6 +84,26 @@ class AuthProvider with ChangeNotifier {
 
     final result = await _authService.resetPassword(email, password);
 
+    _isLoading = false;
+    notifyListeners();
+    return result;
+  }
+
+  // Get Mahasiswa Profile
+  Future<Map<String, dynamic>> getMahasiswaProfile() async {
+    _isLoading = true;
+    notifyListeners();
+    final result = await _authService.getMahasiswaProfile(_token!);
+    _isLoading = false;
+    notifyListeners();
+    return result;
+  }
+
+  // Update Mahasiswa Profile (user can only update limited fields)
+  Future<Map<String, dynamic>> updateMahasiswaProfile(Map<String, dynamic> data) async {
+    _isLoading = true;
+    notifyListeners();
+    final result = await _authService.updateMahasiswaProfile(_token!, data);
     _isLoading = false;
     notifyListeners();
     return result;

@@ -12,61 +12,62 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _nameController = TextEditingController();
+  final _nameController     = TextEditingController();
   final _usernameController = TextEditingController();
-  final _emailController = TextEditingController();
+  final _npmController      = TextEditingController();
+  final _emailController    = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
   void _handleRegister() async {
     if (_nameController.text.isEmpty ||
         _usernameController.text.isEmpty ||
+        _npmController.text.isEmpty ||
         _emailController.text.isEmpty ||
         _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Semua field harus diisi'),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
+      _showSnackBar('Semua field harus diisi', Colors.redAccent);
       return;
     }
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final navigator    = Navigator.of(context);
+    final messenger    = ScaffoldMessenger.of(context);
+
     final result = await authProvider.register(
       _nameController.text,
       _usernameController.text,
+      _npmController.text,
       _emailController.text,
       _passwordController.text,
     );
 
-    if (mounted) {
-      if (result['success']) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message'] ?? 'Registrasi berhasil!'),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message']),
-            backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-      }
+    if (result['success']) {
+      messenger.showSnackBar(SnackBar(
+        content: Text(result['message'] ?? 'Registrasi berhasil!'),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ));
+      navigator.pushReplacement(
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } else {
+      messenger.showSnackBar(SnackBar(
+        content: Text(result['message']),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ));
     }
+  }
+
+  void _showSnackBar(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message),
+      backgroundColor: color,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    ));
   }
 
   @override
@@ -86,7 +87,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          // Background Decoration
           Positioned(
             top: -100,
             right: -100,
@@ -107,7 +107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   const SizedBox(height: 20),
                   Text(
-                    'Buat Akun Baru',
+                    'Buat Akun Mahasiswa',
                     style: Theme.of(context).textTheme.displayLarge?.copyWith(
                           fontSize: 28,
                           color: AppTheme.textColor,
@@ -115,24 +115,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Daftar untuk menikmati layanan akademik ZalXEdu.',
+                    'Daftarkan diri Anda sebagai mahasiswa ZalXEdu.',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: AppTheme.textSecondaryColor,
                         ),
                   ),
                   const SizedBox(height: 40),
-                  
-                  // Name Field
-                  Text(
-                    'Nama Lengkap',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textColor,
-                        ),
-                  ),
+
+                  _buildLabel('Nama Lengkap'),
                   const SizedBox(height: 10),
                   TextField(
                     controller: _nameController,
+                    textCapitalization: TextCapitalization.words,
                     decoration: const InputDecoration(
                       hintText: 'Masukkan nama lengkap',
                       prefixIcon: Icon(Icons.person_outline_rounded),
@@ -140,14 +134,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Username Field
-                  Text(
-                    'Username',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textColor,
-                        ),
-                  ),
+                  _buildLabel('Username'),
                   const SizedBox(height: 10),
                   TextField(
                     controller: _usernameController,
@@ -157,15 +144,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  
-                  // Email Field
-                  Text(
-                    'Email',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textColor,
-                        ),
+
+                  _buildLabel('NPM (Nomor Pokok Mahasiswa)'),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _npmController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      hintText: 'Contoh: 220401001',
+                      prefixIcon: Icon(Icons.badge_outlined),
+                    ),
                   ),
+                  const SizedBox(height: 20),
+
+                  _buildLabel('Email'),
                   const SizedBox(height: 10),
                   TextField(
                     controller: _emailController,
@@ -176,35 +168,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  
-                  // Password Field
-                  Text(
-                    'Password',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textColor,
-                        ),
-                  ),
+
+                  _buildLabel('Password'),
                   const SizedBox(height: 10),
                   TextField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
-                      hintText: 'Masukkan password Anda',
+                      hintText: 'Minimal 6 karakter',
                       prefixIcon: const Icon(Icons.lock_outline_rounded),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                          _obscurePassword
+                              ? Icons.visibility_off_rounded
+                              : Icons.visibility_rounded,
                           size: 20,
                         ),
                         onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 40),
-                  
-                  // Register Button
+
                   ElevatedButton(
                     onPressed: isLoading ? null : _handleRegister,
                     style: ElevatedButton.styleFrom(
@@ -215,29 +201,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ? const SizedBox(
                             height: 24,
                             width: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 3,
-                            ),
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
                           )
-                        : const Text('Daftar Akun'),
+                        : const Text('Daftar Sebagai Mahasiswa'),
                   ),
                   const SizedBox(height: 30),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        'Sudah punya akun? ',
-                        style: TextStyle(color: AppTheme.textSecondaryColor),
-                      ),
+                      Text('Sudah punya akun? ', style: TextStyle(color: AppTheme.textSecondaryColor)),
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
                         child: Text(
                           'Masuk',
-                          style: TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -249,6 +226,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textColor,
+          ),
     );
   }
 }

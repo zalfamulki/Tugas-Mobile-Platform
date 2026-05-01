@@ -5,12 +5,40 @@ import '../providers/academic_provider.dart';
 import '../widgets/state_widgets.dart';
 import '../utils/theme.dart';
 
-class JadwalScreen extends StatelessWidget {
+class JadwalScreen extends StatefulWidget {
   const JadwalScreen({super.key});
 
   @override
+  State<JadwalScreen> createState() => _JadwalScreenState();
+}
+
+class _JadwalScreenState extends State<JadwalScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _fetchInitialData();
+  }
+
+  Future<void> _fetchInitialData() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final academic = Provider.of<AcademicProvider>(context, listen: false);
+    if (auth.token != null && auth.user != null) {
+      final isAdmin = auth.user?.role == 'admin';
+      await academic.getAllData(auth.token!, auth.user!.id, isAdmin);
+    }
+  }
+
+  Future<void> _refreshData() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final academic = Provider.of<AcademicProvider>(context, listen: false);
+    if (auth.token != null && auth.user != null) {
+      final isAdmin = auth.user?.role == 'admin';
+      await academic.getAllData(auth.token!, auth.user!.id, isAdmin);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final auth = Provider.of<AuthProvider>(context);
     final academic = Provider.of<AcademicProvider>(context);
 
     return Scaffold(
@@ -22,13 +50,13 @@ class JadwalScreen extends StatelessWidget {
           ? const LoadingStateWidget()
           : academic.hasError
               ? ErrorStateWidget(
-                  message: academic.error!,
-                  onRetry: () => academic.getAllData(auth.token!, auth.user!.id),
+                  message: academic.error ?? 'Terjadi kesalahan',
+                  onRetry: _refreshData,
                 )
               : academic.schedule.isEmpty
                   ? const EmptyStateWidget(message: 'Jadwal belum tersedia untuk semester ini.')
                   : RefreshIndicator(
-                      onRefresh: () => academic.getAllData(auth.token!, auth.user!.id),
+                      onRefresh: _refreshData,
                       child: ListView.builder(
                         padding: const EdgeInsets.all(24),
                         itemCount: academic.schedule.length,
